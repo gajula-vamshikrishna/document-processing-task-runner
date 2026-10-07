@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: document-task-runner
+  datasource:
+    url: ${DB_URL:jdbc:h2:mem:document-task-runner;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:}
+    driver-class-name: ${DB_DRIVER:org.h2.Driver}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: ${HIBERNATE_DIALECT:org.hibernate.dialect.H2Dialect}
+  task:
+    scheduling:
+      enabled: true
+
+task-runner:
+  max-concurrency: 5
+  scheduler:
+    polling-interval-ms: 500
+  retry:
+    max-attempts: 3
+    initial-delay-ms: 1000
+    multiplier: 2.0
+  execution:
+    default-duration-min-ms: 1000
+    default-duration-max-ms: 3000
+    timeout-seconds: 10
