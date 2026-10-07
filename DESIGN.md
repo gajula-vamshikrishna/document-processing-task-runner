@@ -41,16 +41,16 @@ The system is intentionally simple:
 
 ## 5. Concurrency Limit
 
-The concurrency limit is guaranteed by the fixed-size executor and a centralized admission check. The configured `max-concurrency` value is applied to the executor thread pool and also checked when a task is admitted into the RUNNING state. A task is only submitted when the scheduler confirms there is capacity.
+The implementation enforces the concurrency limit before a task is marked `RUNNING`. The fixed-size thread pool is still used, but the scheduler/admission path is the true guardrail: a task is only admitted when the current active `RUNNING` count is below the configured `max-concurrency` limit and all dependencies are satisfied.
 
-In other words:
+This means:
 
 - N = configured worker count
-- only admitted tasks are submitted
-- RUNNING count cannot exceed worker capacity
-- tasks are only admitted once they are eligible and not terminal
+- a task is admitted only after capacity is confirmed
+- actual concurrently executing tasks are limited to `<= N`
+- the scheduler submits tasks in ready order and only after admission succeeds
 
-This prevents runaway thread creation and keeps the scheduler easy to reason about.
+This prevents the system from claiming more work is active than it can safely execute at one time.
 
 ## 6. Restart Behavior
 
@@ -60,11 +60,13 @@ On application startup, all `RUNNING` tasks are reset to `WAITING` and requeued.
 
 The scheduler uses a FIFO approach among ready tasks: older tasks are considered first. This keeps the implementation predictable and simple. A downside is that a long-running task can delay shorter tasks that become ready later.
 
+This is implemented by ordering ready tasks by creation time in the repository query and then admitting them in that order while respecting dependency and concurrency checks.
+
 ## 8. Invariant
 
 A task must never execute unless all dependencies are `SUCCEEDED`.
 
-The invariant is enforced centrally in the scheduler and before task admission. The scheduler asks whether every dependency is successful before moving a task from `WAITING` or `RETRY_WAITING` to `RUNNING`.
+The invariant is enforced centrally in the admission logic before a task is marked `RUNNING` and submitted for execution. The scheduler checks readiness, then `TaskService.tryAdmitTask()` verifies that every dependency has succeeded and that the active `RUNNING` count is below the configured limit before the state transition occurs. If not, the task remains queued and will be reconsidered later.
 
 ## 9. Retry Design
 
@@ -80,7 +82,13 @@ When a dependency permanently fails, all downstream tasks are evaluated and move
 
 ## 11. Cancellation
 
-A waiting or retry-waiting task can be cancelled. A running task can be marked as cancelled when the system chooses to stop scheduling it. Any dependent tasks that require the cancelled task become `BLOCKED` and will not run again.
+The policy is intentionally simple and explicit:
+
+- `WAITING -> CANCELLED`
+- `RETRY_WAITING -> CANCELLED`
+- `RUNNING -> rejected; the task is allowed to finish normally`
+
+A running task is never moved to `CANCELLED` while its worker continues. This avoids inconsistent state and prevents the bug where a task is marked `CANCELLED` and then later a worker marks it `SUCCEEDED`. Any dependent task that requires a cancelled dependency is re-evaluated and becomes `BLOCKED`.
 
 ## 12. Timeout
 
@@ -88,7 +96,7 @@ Execution timeout prevents a worker from being held forever in the case of a hun
 
 ## 13. Persistence
 
-All task state and dependency relations are stored in PostgreSQL-compatible JPA entities. This avoids losing scheduling state across application restarts. The default local configuration uses H2 for test portability, but the application is designed for PostgreSQL in deployed environments.
+All task state and dependency relations are stored in PostgreSQL-compatible JPA entities. This avoids losing scheduling state across application restarts. PostgreSQL is the runtime database for the app; H2 is kept only for test execution and is not the production/default runtime configuration.
 
 ## 14. Thread Safety
 

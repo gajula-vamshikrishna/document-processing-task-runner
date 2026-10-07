@@ -54,18 +54,31 @@ The important part is the orchestration engine behind those tasks, not OCR or ex
 - Java 17
 - Spring Boot 3.x
 - Gradle
-- PostgreSQL-friendly JPA
-- H2 for local tests
+- PostgreSQL runtime database
+- H2 only for tests
 - JUnit 5
 
 ## Configuration
 
+The application uses PostgreSQL as the runtime database. Credentials are supplied through environment variables and are not hardcoded.
+
 ```yaml
 spring:
   datasource:
-    url: ${DB_URL:jdbc:h2:mem:document-task-runner;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
-    username: ${DB_USERNAME:sa}
-    password: ${DB_PASSWORD:}
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: ${DB_DRIVER:org.postgresql.Driver}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: ${HIBERNATE_DIALECT:org.hibernate.dialect.PostgreSQLDialect}
+
+  task:
+    scheduling:
+      enabled: true
 
  task-runner:
   max-concurrency: 5
@@ -80,6 +93,17 @@ spring:
     default-duration-max-ms: 3000
     timeout-seconds: 10
 ```
+
+Example runtime environment variables:
+
+```bash
+export DB_URL=jdbc:postgresql://localhost:5432/document_task_runner
+export DB_USERNAME=postgres
+export DB_PASSWORD=postgres
+export DB_DRIVER=org.postgresql.Driver
+```
+
+H2 remains available only for tests via the test configuration file.
 
 ## Running Locally
 
@@ -103,6 +127,21 @@ On Windows, use:
 gradlew.bat clean test
 gradlew.bat bootRun
 ```
+
+## Web UI
+
+Start the Spring Boot application and open:
+
+http://localhost:8080/
+
+The UI provides:
+- workflow submission
+- task status
+- task statistics
+- cancellation
+- workflow visualization
+
+The UI is implemented using plain HTML, CSS, and JavaScript and is served directly by Spring Boot.
 
 ## API Examples
 

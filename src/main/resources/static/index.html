@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document Task Runner</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div>
+          <h1>Document Task Runner</h1>
+          <p>Expense Document Processing</p>
+        </div>
+      </header>
+
+      <main class="page-content">
+        <section class="stats-panel panel">
+          <div class="stats-grid" id="statsGrid">
+            <article class="stat-card">
+              <span class="label">Running</span>
+              <strong id="runningStat">0</strong>
+            </article>
+            <article class="stat-card">
+              <span class="label">Waiting</span>
+              <strong id="waitingStat">0</strong>
+            </article>
+            <article class="stat-card">
+              <span class="label">Succeeded</span>
+              <strong id="succeededStat">0</strong>
+            </article>
+            <article class="stat-card">
+              <span class="label">Failed</span>
+              <strong id="failedStat">0</strong>
+            </article>
+            <article class="stat-card">
+              <span class="label">Blocked</span>
+              <strong id="blockedStat">0</strong>
+            </article>
+            <article class="stat-card">
+              <span class="label">Cancelled</span>
+              <strong id="cancelledStat">0</strong>
+            </article>
+          </div>
+        </section>
+
+        <section class="panel form-panel">
+          <h2>Submit Document Workflow</h2>
+          <form id="workflowForm">
+            <div class="field-group">
+              <label for="documentName">Document Name</label>
+              <input id="documentName" name="documentName" type="text" value="hotel_bill_1025.pdf" />
+            </div>
+            <button type="submit" class="primary-btn">Submit Workflow</button>
+          </form>
+          <div id="formMessage" class="message" aria-live="polite"></div>
+          <div id="submissionResult" class="submission-result hidden"></div>
+        </section>
+
+        <section class="panel">
+          <div class="section-header">
+            <h2>Tasks</h2>
+            <button id="refreshTasksBtn" class="secondary-btn" type="button">Refresh</button>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Task Name</th>
+                  <th>Status</th>
+                  <th>Attempts</th>
+                  <th>Error</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="taskTableBody">
+                <tr>
+                  <td colspan="5" class="muted">No tasks loaded yet.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel workflow-panel">
+          <h2>Workflow Visualization</h2>
+          <div class="workflow-diagram" id="workflowDiagram">
+            <div class="flow-row flow-row-single">
+              <div class="node" data-task-name="validate-document">
+                <span class="node-title">Validate Document</span>
+                <span class="node-status">WAITING</span>
+              </div>
+            </div>
+
+            <div class="flow-arrow">↓</div>
+
+            <div class="flow-row flow-row-double">
+              <div class="node" data-task-name="extract-data">
+                <span class="node-title">Extract Data</span>
+                <span class="node-status">WAITING</span>
+              </div>
+              <div class="node" data-task-name="classify-document">
+                <span class="node-title">Classify Document</span>
+                <span class="node-status">WAITING</span>
+              </div>
+            </div>
+
+            <div class="flow-arrow">↓</div>
+
+            <div class="flow-row flow-row-single">
+              <div class="node" data-task-name="validate-data">
+                <span class="node-title">Validate Extracted Data</span>
+                <span class="node-status">WAITING</span>
+              </div>
+            </div>
+
+            <div class="flow-arrow">↓</div>
+
+            <div class="flow-row flow-row-single">
+              <div class="node" data-task-name="generate-json">
+                <span class="node-title">Generate JSON</span>
+                <span class="node-status">WAITING</span>
+              </div>
+            </div>
+
+            <div class="flow-arrow">↓</div>
+
+            <div class="flow-row flow-row-single">
+              <div class="node" data-task-name="store-result">
+                <span class="node-title">Store Result</span>
+                <span class="node-status">WAITING</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

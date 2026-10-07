@@ -2,7 +2,7 @@
 
 ## PostgreSQL vs In-Memory
 
-PostgreSQL was chosen because the assignment requires persistence across restart. An in-memory model would be much easier to implement, but it would lose task state immediately when the process exits.
+PostgreSQL was chosen because the assignment requires persistence across restart. An in-memory model would be much easier to implement, but it would lose task state immediately when the process exits. The runtime configuration uses PostgreSQL, while H2 remains limited to the test environment.
 
 ## Fixed Thread Pool vs Unlimited Threads
 
